@@ -1,0 +1,51 @@
+import boto3
+import json
+
+class BedrockAssistant:
+    def __init__(self):
+        self.bedrock = boto3.client('bedrock-runtime')
+
+    def generate_text(self, prompt, model_id='anthropic.claude-v2'):
+        body = json.dumps({
+            "prompt": prompt,
+            "max_tokens_to_sample": 300,
+            "temperature": 0.7,
+        })
+        
+        response = self.bedrock.invoke_model(modelId=model_id, body=body)
+        return json.loads(response['body'].read())['completion']
+
+    def analyze_sentiment(self, text, model_id='cohere.command-text-v14'):
+        body = json.dumps({
+            "prompt": f"Analyze the sentiment of the following text: {text}",
+            "max_tokens": 100,
+            "temperature": 0.2,
+        })
+        
+        response = self.bedrock.invoke_model(modelId=model_id, body=body)
+        return json.loads(response['body'].read())['generations'][0]['text']
+
+    def generate_image(self, prompt, model_id='stability.stable-diffusion-xl-v0'):
+        body = json.dumps({
+            "text_prompts": [{"text": prompt}],
+            "cfg_scale": 10,
+            "steps": 30,
+        })
+        
+        response = self.bedrock.invoke_model(modelId=model_id, body=body)
+        return json.loads(response['body'].read())['artifacts'][0]['base64']
+
+# Usage example
+assistant = BedrockAssistant()
+
+# Generate text
+text = assistant.generate_text("Write a nice story about Messi")
+print("Generated Text:", text)
+
+# Analyze sentiment
+sentiment = assistant.analyze_sentiment("I love Messi goals!")
+print("Sentiment Analysis:", sentiment)
+
+# Generate image (returns base64 string)
+image_base64 = assistant.generate_image("A small city with lot of flowers")
+print("Image generated (base64 string):", image_base64[:100] + "...")  # Print first 100 chars
